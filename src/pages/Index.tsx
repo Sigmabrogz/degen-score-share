@@ -35,105 +35,69 @@ const Index = () => {
     
     try {
       setTimeout(async () => {
-        if (mainContentRef.current && shareCardRef.current) {
-          // Create a simplified clone of the main content for the share card
-          const mainClone = document.createElement('div');
-          mainClone.className = 'bg-defi-dark text-white p-4 w-full h-full flex flex-col';
-          
-          // Add a simplified version of the header
-          const header = document.createElement('div');
-          header.className = 'flex justify-between items-center mb-4';
-          header.innerHTML = `
-            <h2 class="text-xl font-bold text-defi-green monument-font">DEFI SCORE: ${userData.score}</h2>
-            <p class="text-white">User: ${userData.username}</p>
-          `;
-          mainClone.appendChild(header);
-          
-          // Create center content with profile info and visualization
-          const centerContent = document.createElement('div');
-          centerContent.className = 'flex flex-1 justify-center items-center';
-          
-          // Clone the radar visualization
-          if (mainContentRef.current.querySelector('.radar-visualization')) {
-            const radarClone = mainContentRef.current.querySelector('.radar-visualization')?.cloneNode(true);
-            if (radarClone) centerContent.appendChild(radarClone);
-          } else {
-            // Fallback if radar not found
-            const fallback = document.createElement('div');
-            fallback.className = 'w-64 h-64 bg-defi-gray/20 rounded-full flex items-center justify-center';
-            fallback.innerHTML = '<p class="text-defi-green text-lg">DeFi Score Visualization</p>';
-            centerContent.appendChild(fallback);
-          }
-          
-          mainClone.appendChild(centerContent);
-          
-          // Add stats section at bottom
-          const stats = document.createElement('div');
-          stats.className = 'grid grid-cols-3 gap-4 mt-4';
-          stats.innerHTML = `
-            <div class="glass-panel p-3 rounded-lg flex items-center">
-              <div class="mr-2 p-1 bg-defi-green/20 rounded">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 15 L12 3 M12 15 L8 11 M12 15 L16 11 M9 20 L15 20" stroke="#ACFF7F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <div>
-                <p class="text-xs text-white/70">RANK</p>
-                <p class="text-lg font-bold text-white">#${userData.rank}</p>
-              </div>
-            </div>
-            <div class="glass-panel p-3 rounded-lg flex items-center">
-              <div class="mr-2 p-1 bg-defi-green/20 rounded">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13 2 L13 7 L18 7 M13 2 L6 2 L6 22 L18 22 L18 7 L13 7" stroke="#ACFF7F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <div>
-                <p class="text-xs text-white/70">LEVEL</p>
-                <p class="text-lg font-bold text-white">${userData.level}</p>
-              </div>
-            </div>
-            <div class="glass-panel p-3 rounded-lg flex items-center">
-              <div class="mr-2 p-1 bg-defi-green/20 rounded">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 3 L19 3 L19 21 L12 17 L5 21 L5 3Z" stroke="#ACFF7F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <div>
-                <p class="text-xs text-white/70">RATING</p>
-                <p class="text-lg font-bold text-white">WHALE</p>
-              </div>
-            </div>
-          `;
-          mainClone.appendChild(stats);
-          
-          // Add the main clone to the share card content
-          const cardContent = shareCardRef.current.querySelector('.relative');
-          if (cardContent) {
-            cardContent.innerHTML = '';
-            cardContent.appendChild(mainClone);
-            
-            const canvas = await html2canvas(shareCardRef.current, {
-              backgroundColor: null,
-              scale: 2,
-              logging: false,
-              useCORS: true,
-              allowTaint: true
-            });
-            
-            const imageUrl = canvas.toDataURL('image/png');
-            setShareImageUrl(imageUrl);
-          }
+        if (!mainContentRef.current) {
+          throw new Error("Main content element not found");
         }
+        
+        console.log("Step 1: Capturing main content");
+        
+        const mainCanvas = await html2canvas(mainContentRef.current, {
+          backgroundColor: "#14141A",
+          scale: 2,
+          logging: true,
+          useCORS: true,
+          allowTaint: true,
+          ignoreElements: (el) => {
+            return el.id === 'shareCard' || el.classList.contains('fixed');
+          }
+        });
+        
+        if (!mainCanvas || mainCanvas.width === 0) {
+          throw new Error("Failed to capture main content");
+        }
+        
+        console.log("Step 2: Main content captured successfully", mainCanvas.width, mainCanvas.height);
+        
+        if (!shareCardRef.current) {
+          throw new Error("Share card element not found");
+        }
+        
+        const contentDiv = shareCardRef.current.querySelector('.absolute.inset-0.p-4');
+        if (!contentDiv) {
+          throw new Error("Content div not found in share card");
+        }
+        
+        contentDiv.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = mainCanvas.toDataURL('image/png');
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        contentDiv.appendChild(img);
+        
+        console.log("Step 3: Capturing final share card");
+        
+        const finalCanvas = await html2canvas(shareCardRef.current, {
+          backgroundColor: null,
+          scale: 2,
+          logging: true,
+          useCORS: true,
+          allowTaint: true
+        });
+        
+        const imageUrl = finalCanvas.toDataURL('image/png');
+        setShareImageUrl(imageUrl);
+        console.log("Step 4: Image generation complete");
+        
         setGenerating(false);
-      }, 100);
+      }, 500);
     } catch (err) {
       console.error('Failed to generate share image:', err);
       toast({
         title: "Failed to generate image",
-        description: "Please try again",
+        description: "Please try again: " + (err instanceof Error ? err.message : "Unknown error"),
         variant: "destructive",
-        duration: 3000,
+        duration: 5000,
       });
       setGenerating(false);
     }

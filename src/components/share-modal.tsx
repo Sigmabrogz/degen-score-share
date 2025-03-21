@@ -4,7 +4,6 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ShareCard } from './share-card';
 import { Twitter, Download, Copy, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { DialogDescription } from './ui/dialog';

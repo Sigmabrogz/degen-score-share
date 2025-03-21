@@ -1,8 +1,6 @@
 
 import React from 'react';
-import { TokenBadge } from './token-badge';
 import { ClusterLogo } from './cluster-logo';
-import { Zap, Trophy } from 'lucide-react';
 import { AspectRatio } from './ui/aspect-ratio';
 
 interface ShareCardProps {
@@ -19,7 +17,7 @@ export function ShareCard({ username, score, rank, level, children }: ShareCardP
       id="shareCard" 
       className="w-full max-w-[800px] bg-defi-dark rounded-xl border-4 border-defi-green/50"
       style={{ 
-        background: 'rgb(20,20,26)',
+        background: '#14141A',
         boxShadow: '0 4px 30px rgba(172, 255, 127, 0.3)'
       }}
     >
