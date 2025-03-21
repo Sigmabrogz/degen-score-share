@@ -1,6 +1,6 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Twitter, MessageSquare, Zap, Bitcoin, Share2, ArrowUpRight } from 'lucide-react';
+import ReactDOMServer from 'react-dom/server';
 
 // Platform icons for orbiting
 const PLATFORM_ICONS = [
@@ -426,3 +426,4 @@ export function RadarVisualization() {
     </div>
   );
 }
+
