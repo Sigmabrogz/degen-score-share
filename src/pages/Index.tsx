@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navbar } from '@/components/navbar';
 import { RadarVisualization } from '@/components/radar-visualization';
 import { ProfileSection } from '@/components/profile-section';
@@ -9,120 +9,40 @@ import { ShareButton } from '@/components/share-button';
 import { ClusterLogo } from '@/components/cluster-logo';
 import { TokenBadge } from '@/components/token-badge';
 import { Twitter, MessageSquare, Wallet, Share2, Clock, Zap, Trophy, ArrowUpRight } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { ShareModal } from '@/components/share-modal';
-import { ShareCard } from '@/components/share-card';
-import html2canvas from 'html2canvas';
 
 const Index = () => {
-  const [generating, setGenerating] = useState(false);
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
-  const mainContentRef = useRef<HTMLDivElement>(null);
-  const shareCardRef = useRef<HTMLDivElement>(null);
-  
-  const userData = {
-    username: "0xSolidity.eth",
-    score: "1,035",
-    rank: "42",
-    level: "18"
-  };
+  const [copied, setCopied] = useState(false);
 
-  // Function to capture the main content and generate share image
-  const handleShare = async () => {
-    setGenerating(true);
-    setShareModalOpen(true);
-    setShareImageUrl(null);
-    
-    // Delay to let the modal render before starting capture
-    setTimeout(async () => {
-      try {
-        // Step 1: Create a clone of the main content to avoid modifying the UI
-        const mainContent = mainContentRef.current;
-        if (!mainContent) {
-          throw new Error("Main content element not found");
-        }
-        
-        const mainContentClone = mainContent.cloneNode(true) as HTMLElement;
-        mainContentClone.style.width = "800px";
-        mainContentClone.style.position = "absolute";
-        mainContentClone.style.left = "-9999px";
-        mainContentClone.style.top = "-9999px";
-        document.body.appendChild(mainContentClone);
-        
-        // Step 2: Capture the main content
-        const mainCanvas = await html2canvas(mainContentClone, {
-          backgroundColor: "#14141A",
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          allowTaint: true,
-          width: 800,
-          height: 600,
-          onclone: (doc) => {
-            // Adjust any dynamic elements in the clone if needed
-            const dynamicElements = doc.querySelectorAll('canvas');
-            dynamicElements.forEach(el => {
-              // Add any specific handling for canvas elements
-            });
-          }
-        });
-        
-        document.body.removeChild(mainContentClone);
-        
-        // Step 3: Update the share card with the captured content
-        if (!shareCardRef.current) {
-          throw new Error("Share card reference not found");
-        }
-        
-        const contentContainer = shareCardRef.current.querySelector('.flex-1.relative');
-        if (!contentContainer) {
-          throw new Error("Content container not found in share card");
-        }
-        
-        // Clear the container and insert the captured image
-        while (contentContainer.firstChild) {
-          contentContainer.removeChild(contentContainer.firstChild);
-        }
-        
-        const img = document.createElement('img');
-        img.src = mainCanvas.toDataURL('image/png');
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
-        contentContainer.appendChild(img);
-        
-        // Step 4: Capture the share card to create the final image
-        const finalCanvas = await html2canvas(shareCardRef.current, {
-          backgroundColor: null,
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          allowTaint: true
-        });
-        
-        const imageUrl = finalCanvas.toDataURL('image/png');
-        setShareImageUrl(imageUrl);
-      } catch (err) {
-        console.error('Error generating share image:', err);
+  const handleShare = () => {
+    // In a real app, this would generate a shareable link
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => {
+        setCopied(true);
         toast({
-          title: "Failed to generate image",
-          description: err instanceof Error ? err.message : "Unknown error during image generation",
-          variant: "destructive",
-          duration: 5000,
+          title: "Link copied to clipboard",
+          description: "Share your DeFi score with friends!",
+          duration: 3000,
         });
-      } finally {
-        setGenerating(false);
-      }
-    }, 500);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy:', err);
+        toast({
+          title: "Failed to copy link",
+          description: "Please try again",
+          variant: "destructive",
+          duration: 3000,
+        });
+      });
   };
 
   return (
     <div className="min-h-screen bg-defi-dark text-white flex flex-col">
       <Navbar />
       
-      <main ref={mainContentRef} className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           
           {/* Left Column */}
@@ -287,49 +207,10 @@ const Index = () => {
               </div>
             </div>
             
-            <ShareButton onClick={handleShare} className="w-full" loading={generating} />
+            <ShareButton onClick={handleShare} className="w-full" />
           </div>
         </div>
       </main>
-      
-      <ShareModal 
-        open={shareModalOpen}
-        onOpenChange={setShareModalOpen}
-        imageUrl={shareImageUrl}
-        generating={generating}
-        userData={userData}
-      />
-      
-      {/* Hidden elements for capturing */}
-      <div className="fixed left-[-9999px] top-[-9999px] opacity-0 pointer-events-none">
-        <div ref={shareCardRef} className="w-[800px]">
-          <ShareCard
-            username={userData.username}
-            score={userData.score}
-            rank={userData.rank}
-            level={userData.level}
-          >
-            <div className="flex flex-col items-center justify-center h-full bg-defi-dark">
-              <RadarVisualization />
-              <div className="mt-4 glass-panel neo-shadow p-4 rounded-xl text-center">
-                <h3 className="text-xl font-bold text-white monument-font">DEFI RANKING</h3>
-                <p className="text-3xl font-bold text-defi-green">WHALE</p>
-                <div className="mt-2 flex justify-center gap-3">
-                  <div className="flex flex-col items-center">
-                    <p className="text-xs text-white/50">RANK</p>
-                    <p className="text-xl font-bold text-white">#{userData.rank}</p>
-                  </div>
-                  <Separator orientation="vertical" className="h-10 bg-white/10" />
-                  <div className="flex flex-col items-center">
-                    <p className="text-xs text-white/50">SCORE</p>
-                    <p className="text-xl font-bold text-defi-green">{userData.score}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </ShareCard>
-        </div>
-      </div>
     </div>
   );
 };
