@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Cog } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 
 interface ScoreCardProps {
   icon: React.ReactNode;
@@ -27,13 +27,13 @@ export function ScoreCard({ icon, label, score, className }: ScoreCardProps) {
   );
 }
 
-export function CompactScoreCard({ score, label, className }: { score: string; label: string; className?: string }) {
+export function CompactScoreCard({ score, label, className, icon }: { score: string; label: string; className?: string; icon?: React.ReactNode }) {
   return (
     <div className={cn(
       "glass-panel neo-shadow flex items-center gap-2 px-3 py-2 rounded-lg animate-fade-in",
       className
     )}>
-      <Cog className="w-4 h-4 text-defi-green" />
+      {icon || <Trophy className="w-4 h-4 text-defi-green" />}
       <span className="text-white/70 text-xs">{label}</span>
       <span className="text-white font-bold ml-auto">{score}</span>
     </div>

@@ -21,7 +21,7 @@ export function ShareButton({ onClick, className }: ShareButtonProps) {
         className
       )}
     >
-      <span>SHARE</span>
+      <span>SHARE YOUR SCORE</span>
       <Share2 className="w-4 h-4" />
     </button>
   );
