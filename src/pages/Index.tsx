@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Navbar } from '@/components/navbar';
 import { RadarVisualization } from '@/components/radar-visualization';
@@ -28,88 +29,93 @@ const Index = () => {
     level: "18"
   };
 
+  // Function to capture the main content and generate share image
   const handleShare = async () => {
     setGenerating(true);
     setShareModalOpen(true);
     setShareImageUrl(null);
     
-    try {
-      setTimeout(async () => {
-        try {
-          if (!mainContentRef.current) {
-            throw new Error("Main content element not found");
-          }
-          
-          console.log("Capturing main content...");
-          
-          const originalContent = mainContentRef.current;
-          
-          const mainCanvas = await html2canvas(originalContent, {
-            backgroundColor: "#14141A",
-            scale: 2,
-            logging: true,
-            useCORS: true,
-            allowTaint: true,
-          });
-          
-          console.log("Main content captured, dimensions:", mainCanvas.width, "x", mainCanvas.height);
-          
-          if (!shareCardRef.current) {
-            throw new Error("Share card reference not found");
-          }
-          
-          const contentContainer = shareCardRef.current.querySelector('.flex-1.relative');
-          if (!contentContainer) {
-            throw new Error("Content container not found in share card");
-          }
-          
-          while (contentContainer.firstChild) {
-            contentContainer.removeChild(contentContainer.firstChild);
-          }
-          
-          const img = document.createElement('img');
-          img.src = mainCanvas.toDataURL('image/png');
-          img.style.width = '100%';
-          img.style.height = '100%';
-          img.style.objectFit = 'cover';
-          contentContainer.appendChild(img);
-          
-          console.log("Added captured content to share card, capturing final result...");
-          
-          const finalCanvas = await html2canvas(shareCardRef.current, {
-            backgroundColor: null,
-            scale: 2,
-            logging: true,
-            useCORS: true,
-            allowTaint: true
-          });
-          
-          const imageUrl = finalCanvas.toDataURL('image/png');
-          setShareImageUrl(imageUrl);
-          console.log("Share card capture complete!");
-          
-        } catch (innerErr) {
-          console.error("Error in capture process:", innerErr);
-          toast({
-            title: "Failed to generate image",
-            description: innerErr instanceof Error ? innerErr.message : "Unknown error during capture",
-            variant: "destructive",
-            duration: 5000,
-          });
-        } finally {
-          setGenerating(false);
+    // Delay to let the modal render before starting capture
+    setTimeout(async () => {
+      try {
+        // Step 1: Create a clone of the main content to avoid modifying the UI
+        const mainContent = mainContentRef.current;
+        if (!mainContent) {
+          throw new Error("Main content element not found");
         }
-      }, 1000);
-    } catch (err) {
-      console.error('Failed to generate share image:', err);
-      toast({
-        title: "Failed to generate image",
-        description: "Please try again: " + (err instanceof Error ? err.message : "Unknown error"),
-        variant: "destructive",
-        duration: 5000,
-      });
-      setGenerating(false);
-    }
+        
+        const mainContentClone = mainContent.cloneNode(true) as HTMLElement;
+        mainContentClone.style.width = "800px";
+        mainContentClone.style.position = "absolute";
+        mainContentClone.style.left = "-9999px";
+        mainContentClone.style.top = "-9999px";
+        document.body.appendChild(mainContentClone);
+        
+        // Step 2: Capture the main content
+        const mainCanvas = await html2canvas(mainContentClone, {
+          backgroundColor: "#14141A",
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          width: 800,
+          height: 600,
+          onclone: (doc) => {
+            // Adjust any dynamic elements in the clone if needed
+            const dynamicElements = doc.querySelectorAll('canvas');
+            dynamicElements.forEach(el => {
+              // Add any specific handling for canvas elements
+            });
+          }
+        });
+        
+        document.body.removeChild(mainContentClone);
+        
+        // Step 3: Update the share card with the captured content
+        if (!shareCardRef.current) {
+          throw new Error("Share card reference not found");
+        }
+        
+        const contentContainer = shareCardRef.current.querySelector('.flex-1.relative');
+        if (!contentContainer) {
+          throw new Error("Content container not found in share card");
+        }
+        
+        // Clear the container and insert the captured image
+        while (contentContainer.firstChild) {
+          contentContainer.removeChild(contentContainer.firstChild);
+        }
+        
+        const img = document.createElement('img');
+        img.src = mainCanvas.toDataURL('image/png');
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        contentContainer.appendChild(img);
+        
+        // Step 4: Capture the share card to create the final image
+        const finalCanvas = await html2canvas(shareCardRef.current, {
+          backgroundColor: null,
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true
+        });
+        
+        const imageUrl = finalCanvas.toDataURL('image/png');
+        setShareImageUrl(imageUrl);
+      } catch (err) {
+        console.error('Error generating share image:', err);
+        toast({
+          title: "Failed to generate image",
+          description: err instanceof Error ? err.message : "Unknown error during image generation",
+          variant: "destructive",
+          duration: 5000,
+        });
+      } finally {
+        setGenerating(false);
+      }
+    }, 500);
   };
 
   return (
@@ -290,18 +296,37 @@ const Index = () => {
         open={shareModalOpen}
         onOpenChange={setShareModalOpen}
         imageUrl={shareImageUrl}
+        generating={generating}
         userData={userData}
       />
       
-      <div className="fixed -left-[9999px]">
-        <div ref={shareCardRef}>
+      {/* Hidden elements for capturing */}
+      <div className="fixed left-[-9999px] top-[-9999px] opacity-0 pointer-events-none">
+        <div ref={shareCardRef} className="w-[800px]">
           <ShareCard
             username={userData.username}
             score={userData.score}
             rank={userData.rank}
             level={userData.level}
           >
-            <RadarVisualization />
+            <div className="flex flex-col items-center justify-center h-full bg-defi-dark">
+              <RadarVisualization />
+              <div className="mt-4 glass-panel neo-shadow p-4 rounded-xl text-center">
+                <h3 className="text-xl font-bold text-white monument-font">DEFI RANKING</h3>
+                <p className="text-3xl font-bold text-defi-green">WHALE</p>
+                <div className="mt-2 flex justify-center gap-3">
+                  <div className="flex flex-col items-center">
+                    <p className="text-xs text-white/50">RANK</p>
+                    <p className="text-xl font-bold text-white">#{userData.rank}</p>
+                  </div>
+                  <Separator orientation="vertical" className="h-10 bg-white/10" />
+                  <div className="flex flex-col items-center">
+                    <p className="text-xs text-white/50">SCORE</p>
+                    <p className="text-xl font-bold text-defi-green">{userData.score}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </ShareCard>
         </div>
       </div>

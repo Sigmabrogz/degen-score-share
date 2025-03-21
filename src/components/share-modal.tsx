@@ -4,7 +4,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Twitter, Download, Copy, X } from 'lucide-react';
+import { Twitter, Download, Copy, X, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { DialogDescription } from './ui/dialog';
 
@@ -12,6 +12,7 @@ interface ShareModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   imageUrl: string | null;
+  generating: boolean;
   userData: {
     username: string;
     score: string;
@@ -20,7 +21,7 @@ interface ShareModalProps {
   };
 }
 
-export function ShareModal({ open, onOpenChange, imageUrl, userData }: ShareModalProps) {
+export function ShareModal({ open, onOpenChange, imageUrl, generating, userData }: ShareModalProps) {
   const handleTwitterShare = () => {
     // Format tweet text
     const tweetText = encodeURIComponent(
@@ -96,7 +97,12 @@ export function ShareModal({ open, onOpenChange, imageUrl, userData }: ShareModa
         </DialogHeader>
         
         <div className="py-4 flex flex-col items-center">
-          {imageUrl ? (
+          {generating ? (
+            <div className="w-full aspect-video bg-defi-gray/20 rounded-lg flex flex-col items-center justify-center gap-2">
+              <Loader2 className="w-8 h-8 text-defi-green animate-spin" />
+              <p className="text-white/50">Generating image...</p>
+            </div>
+          ) : imageUrl ? (
             <div className="relative rounded-lg overflow-hidden shadow-[0_0_15px_rgba(172,255,127,0.2)]">
               <img 
                 src={imageUrl} 
@@ -105,8 +111,8 @@ export function ShareModal({ open, onOpenChange, imageUrl, userData }: ShareModa
               />
             </div>
           ) : (
-            <div className="w-full aspect-video bg-defi-gray/20 rounded-lg animate-pulse flex items-center justify-center">
-              <p className="text-white/50">Generating image...</p>
+            <div className="w-full aspect-video bg-defi-gray/20 rounded-lg flex items-center justify-center">
+              <p className="text-white/50">Failed to generate image. Try again.</p>
             </div>
           )}
           
@@ -114,6 +120,7 @@ export function ShareModal({ open, onOpenChange, imageUrl, userData }: ShareModa
             <Button 
               onClick={handleTwitterShare}
               className="bg-[#1DA1F2] hover:bg-[#1a94df] text-white"
+              disabled={!imageUrl || generating}
             >
               <Twitter className="w-4 h-4 mr-2" />
               Twitter
@@ -122,7 +129,7 @@ export function ShareModal({ open, onOpenChange, imageUrl, userData }: ShareModa
             <Button 
               onClick={handleDownload}
               className="bg-defi-green text-black hover:bg-defi-green-light"
-              disabled={!imageUrl}
+              disabled={!imageUrl || generating}
             >
               <Download className="w-4 h-4 mr-2" />
               Save
@@ -131,7 +138,7 @@ export function ShareModal({ open, onOpenChange, imageUrl, userData }: ShareModa
             <Button 
               onClick={handleCopyToClipboard}
               className="bg-defi-gray hover:bg-defi-gray-light"
-              disabled={!imageUrl}
+              disabled={!imageUrl || generating}
             >
               <Copy className="w-4 h-4 mr-2" />
               Copy
