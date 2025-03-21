@@ -19,7 +19,7 @@ export function ShareCard({ username, score, rank, level, children }: ShareCardP
       id="shareCard" 
       className="w-full max-w-[800px] bg-defi-dark rounded-xl border-4 border-defi-green/50"
       style={{ 
-        background: 'linear-gradient(145deg, rgba(20,20,26,1) 0%, rgba(30,32,40,1) 100%)',
+        background: 'rgb(20,20,26)',
         boxShadow: '0 4px 30px rgba(172, 255, 127, 0.3)'
       }}
     >
@@ -37,4 +37,3 @@ export function ShareCard({ username, score, rank, level, children }: ShareCardP
     </div>
   );
 }
-

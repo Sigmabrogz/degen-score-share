@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ShareCard } from './share-card';
 import { Twitter, Download, Copy, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { DialogDescription } from './ui/dialog';
 
 interface ShareModalProps {
   open: boolean;
@@ -90,6 +91,9 @@ export function ShareModal({ open, onOpenChange, imageUrl, userData }: ShareModa
           <DialogTitle className="text-xl font-bold text-center text-white monument-font">
             SHARE YOUR SCORE
           </DialogTitle>
+          <DialogDescription className="text-center text-white/70">
+            Share your DeFi score card with the community
+          </DialogDescription>
         </DialogHeader>
         
         <div className="py-4 flex flex-col items-center">
