@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Zap, Twitter, MessageSquare } from 'lucide-react';
 
@@ -124,18 +125,21 @@ export function RadarVisualization() {
       ctx.restore();
     };
     
+    // Center coordinates
+    const centerX = canvas.width / (2 * (window.devicePixelRatio || 1));
+    const centerY = canvas.height / (2 * (window.devicePixelRatio || 1));
+    
+    // Initialize logos at different angles around the edge
     const logos = [
-      { x: canvas.width * 0.2, y: canvas.height * 0.2, size: 20, type: 'twitter', angle: Math.random() * Math.PI * 2, distance: Math.random() * 100 + 150 },
-      { x: canvas.width * 0.8, y: canvas.height * 0.2, size: 20, type: 'telegram', angle: Math.random() * Math.PI * 2, distance: Math.random() * 100 + 150 },
-      { x: canvas.width * 0.2, y: canvas.height * 0.8, size: 20, type: 'eth', angle: Math.random() * Math.PI * 2, distance: Math.random() * 100 + 150 },
-      { x: canvas.width * 0.8, y: canvas.height * 0.8, size: 20, type: 'sol', angle: Math.random() * Math.PI * 2, distance: Math.random() * 100 + 150 },
+      { type: 'twitter', angle: Math.PI * 0.25, distance: 180, size: 20 },
+      { type: 'telegram', angle: Math.PI * 0.75, distance: 180, size: 20 },
+      { type: 'eth', angle: Math.PI * 1.25, distance: 180, size: 20 },
+      { type: 'sol', angle: Math.PI * 1.75, distance: 180, size: 20 },
     ];
     
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width / (window.devicePixelRatio || 1), canvas.height / (window.devicePixelRatio || 1));
       
-      const centerX = canvas.width / (2 * (window.devicePixelRatio || 1));
-      const centerY = canvas.height / (2 * (window.devicePixelRatio || 1));
       const radius = Math.min(centerX, centerY) * 0.9;
       
       // Draw outer circle
@@ -230,29 +234,33 @@ export function RadarVisualization() {
       
       ctx.restore();
       
-      // Update logo positions (blackhole effect)
+      // Update and draw logos with blackhole effect
       const dpr = window.devicePixelRatio || 1;
       logos.forEach(logo => {
-        // Update angle for circular motion
-        logo.angle += 0.02;
+        // Update angle for circular motion - slower angle change as they get closer to center
+        logo.angle += 0.01 + (0.02 * (logo.distance / 180));
         
-        // Gradually decrease distance to create a spiral
-        logo.distance = Math.max(20, logo.distance * 0.995);
+        // Gradually decrease distance to create a spiral effect
+        logo.distance = Math.max(5, logo.distance * 0.995);
         
-        // Calculate new positions
-        logo.x = centerX * dpr + Math.cos(logo.angle) * logo.distance;
-        logo.y = centerY * dpr + Math.sin(logo.angle) * logo.distance;
+        // Calculate new positions based on center coordinates
+        const x = centerX * dpr + Math.cos(logo.angle) * logo.distance;
+        const y = centerY * dpr + Math.sin(logo.angle) * logo.distance;
+        
+        // Size increases as they get closer to center
+        const sizeFactor = 1 + (1 - logo.distance / 180) * 0.5;
         
         // Draw logo
-        drawLogo(ctx, logo.type, logo.x, logo.y, logo.size * (1 - logo.distance / 300));
+        drawLogo(ctx, logo.type, x, y, logo.size * sizeFactor);
         
         // Draw trail
         ctx.beginPath();
-        ctx.moveTo(logo.x, logo.y);
+        ctx.moveTo(x, y);
         const trailLength = 20;
         for (let i = 1; i <= trailLength; i++) {
-          const trailX = centerX * dpr + Math.cos(logo.angle - i * 0.03) * (logo.distance + i * 0.8);
-          const trailY = centerY * dpr + Math.sin(logo.angle - i * 0.03) * (logo.distance + i * 0.8);
+          const trailDistance = logo.distance + i * 0.8;
+          const trailX = centerX * dpr + Math.cos(logo.angle - i * 0.03) * trailDistance;
+          const trailY = centerY * dpr + Math.sin(logo.angle - i * 0.03) * trailDistance;
           ctx.lineTo(trailX, trailY);
         }
         ctx.strokeStyle = `rgba(172, 255, 127, ${0.5 - logo.distance / 400})`;
@@ -262,8 +270,8 @@ export function RadarVisualization() {
       
       // Reset logos when they get too close to center
       logos.forEach(logo => {
-        if (logo.distance < 30) {
-          logo.distance = Math.random() * 100 + 150;
+        if (logo.distance < 10) {
+          logo.distance = 180;
           logo.angle = Math.random() * Math.PI * 2;
         }
       });
