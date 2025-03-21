@@ -1,22 +1,28 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Navbar } from '@/components/navbar';
 import { RadarVisualization } from '@/components/radar-visualization';
 import { ProfileSection } from '@/components/profile-section';
 import { ScoreCard } from '@/components/score-card';
 import { ProgressBar } from '@/components/progress-bar';
 import { ShareButton } from '@/components/share-button';
+import { ShareModal } from '@/components/share-modal';
 import { ClusterLogo } from '@/components/cluster-logo';
 import { TokenBadge } from '@/components/token-badge';
 import { Twitter, MessageSquare, Wallet, Share2, Clock, Zap, Trophy, ArrowUpRight } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
+import html2canvas from 'html2canvas';
 
 const Index = () => {
   const [copied, setCopied] = useState(false);
-
-  const handleShare = () => {
-    // In a real app, this would generate a shareable link
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [capturedImageUrl, setCapturedImageUrl] = useState<string | undefined>(undefined);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  
+  // Function to handle copying link to clipboard
+  const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href)
       .then(() => {
         setCopied(true);
@@ -37,13 +43,84 @@ const Index = () => {
         });
       });
   };
-
+  
+  // Function to handle share button click and generate image
+  const handleShare = async () => {
+    setIsShareModalOpen(true);
+    setIsGeneratingImage(true);
+    setCapturedImageUrl(undefined);
+    
+    try {
+      // Small delay to let the modal render
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Step 1: Capture the main content
+      if (!contentRef.current) {
+        throw new Error("Content element not found");
+      }
+      
+      // Create a clone of the content to avoid DOM modification issues
+      const contentClone = contentRef.current.cloneNode(true) as HTMLElement;
+      document.body.appendChild(contentClone);
+      
+      // Apply some styles to make it look good for capture
+      contentClone.style.position = 'absolute';
+      contentClone.style.left = '-9999px';
+      contentClone.style.width = '1200px'; // Fixed width to ensure consistency
+      contentClone.style.height = 'auto';
+      contentClone.style.transform = 'none';
+      contentClone.style.transition = 'none';
+      
+      // Capture the content
+      const contentCanvas = await html2canvas(contentClone, {
+        scale: 1,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        logging: false,
+      });
+      
+      // Clean up the clone
+      document.body.removeChild(contentClone);
+      
+      // Convert canvas to image URL
+      const contentImageUrl = contentCanvas.toDataURL('image/png');
+      setCapturedImageUrl(contentImageUrl);
+      
+    } catch (error) {
+      console.error('Error generating share image:', error);
+      toast({
+        title: "Failed to generate image",
+        description: "Please try again later",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+  
+  // Data for the share card
+  const shareData = {
+    username: "0xSolidity.eth",
+    score: "1,035",
+    rank: "42",
+    level: "18",
+  };
+  
   return (
     <div className="min-h-screen bg-defi-dark text-white flex flex-col">
       <Navbar />
       
       <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        {/* Hidden div for share card reference */}
+        <div className="hidden">
+          <div ref={shareCardRef} className="w-[1200px]">
+            {/* Share card content will be rendered here */}
+          </div>
+        </div>
+        
+        <div ref={contentRef} className="grid grid-cols-1 md:grid-cols-12 gap-8">
           
           {/* Left Column */}
           <div className="md:col-span-4 lg:col-span-3 space-y-6">
@@ -52,6 +129,7 @@ const Index = () => {
               twitterHandle="DeFiWhale"
               telegramHandle="SolanaStaker"
             />
+            
             
             <div className="glass-panel neo-shadow p-5 rounded-xl space-y-4">
               <div className="flex items-center space-x-2">
@@ -84,6 +162,7 @@ const Index = () => {
                 <TokenBadge name="DEFI WHALE" variant="highlight" />
               </div>
             </div>
+            
             
             <div className="glass-panel neo-shadow p-5 rounded-xl space-y-4">
               <div className="flex items-center space-x-2 mb-2">
@@ -150,6 +229,7 @@ const Index = () => {
           
           {/* Right Column */}
           <div className="md:col-span-4 lg:col-span-3 space-y-6">
+            
             <div className="glass-panel neo-shadow p-5 rounded-xl">
               <div className="flex items-center mb-4">
                 <div className="w-2 h-2 rounded-full bg-defi-green mr-2"></div>
@@ -196,6 +276,7 @@ const Index = () => {
               />
             </div>
             
+            
             <div className="glass-panel neo-shadow p-5 rounded-xl space-y-4">
               <p className="text-center text-white/90 font-medium monument-font">
                 Building the future of DeFi, One Transaction at a Time
@@ -207,10 +288,26 @@ const Index = () => {
               </div>
             </div>
             
-            <ShareButton onClick={handleShare} className="w-full" />
+            <ShareButton 
+              onClick={handleShare} 
+              className="w-full" 
+              isLoading={isGeneratingImage}
+            />
           </div>
         </div>
       </main>
+      
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        username={shareData.username}
+        score={shareData.score}
+        rank={shareData.rank}
+        level={shareData.level}
+        imageUrl={capturedImageUrl}
+        isGenerating={isGeneratingImage}
+      />
     </div>
   );
 };
