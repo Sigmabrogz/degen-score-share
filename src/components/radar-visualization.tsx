@@ -1,5 +1,5 @@
-
 import React, { useEffect, useRef } from 'react';
+import { Zap, Twitter, MessageSquare } from 'lucide-react';
 
 export function RadarVisualization() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,6 +46,90 @@ export function RadarVisualization() {
       
       return gradient;
     };
+    
+    const drawLogo = (ctx, type, x, y, size) => {
+      ctx.save();
+      ctx.translate(x, y);
+      
+      // Adjust for device pixel ratio
+      const dpr = window.devicePixelRatio || 1;
+      x = x / dpr;
+      y = y / dpr;
+      
+      switch(type) {
+        case 'twitter':
+          ctx.beginPath();
+          ctx.fillStyle = 'rgba(172, 255, 127, 0.8)';
+          ctx.arc(0, 0, size/2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Twitter bird silhouette
+          ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
+          ctx.beginPath();
+          ctx.moveTo(-size/4, -size/4);
+          ctx.lineTo(size/4, -size/6);
+          ctx.lineTo(-size/6, size/5);
+          ctx.lineTo(size/4, size/4);
+          ctx.fill();
+          break;
+          
+        case 'telegram':
+          ctx.beginPath();
+          ctx.fillStyle = 'rgba(172, 255, 127, 0.8)';
+          ctx.arc(0, 0, size/2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Telegram paper plane silhouette
+          ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
+          ctx.beginPath();
+          ctx.moveTo(-size/4, 0);
+          ctx.lineTo(0, size/4);
+          ctx.lineTo(size/4, -size/6);
+          ctx.lineTo(-size/5, -size/5);
+          ctx.fill();
+          break;
+          
+        case 'eth':
+          ctx.beginPath();
+          ctx.fillStyle = 'rgba(172, 255, 127, 0.8)';
+          ctx.arc(0, 0, size/2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // ETH diamond silhouette
+          ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
+          ctx.beginPath();
+          ctx.moveTo(0, -size/3);
+          ctx.lineTo(-size/3, 0);
+          ctx.lineTo(0, size/3);
+          ctx.lineTo(size/3, 0);
+          ctx.closePath();
+          ctx.fill();
+          break;
+          
+        case 'sol':
+          ctx.beginPath();
+          ctx.fillStyle = 'rgba(172, 255, 127, 0.8)';
+          ctx.arc(0, 0, size/2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // SOL horizontal lines silhouette
+          ctx.fillStyle = 'rgba(20, 20, 20, 0.9)';
+          ctx.beginPath();
+          ctx.fillRect(-size/3, -size/6, size*2/3, size/8);
+          ctx.fillRect(-size/3, 0, size*2/3, size/8);
+          ctx.fillRect(-size/3, size/6, size*2/3, size/8);
+          break;
+      }
+      
+      ctx.restore();
+    };
+    
+    const logos = [
+      { x: canvas.width * 0.2, y: canvas.height * 0.2, size: 20, type: 'twitter', angle: Math.random() * Math.PI * 2, distance: Math.random() * 100 + 150 },
+      { x: canvas.width * 0.8, y: canvas.height * 0.2, size: 20, type: 'telegram', angle: Math.random() * Math.PI * 2, distance: Math.random() * 100 + 150 },
+      { x: canvas.width * 0.2, y: canvas.height * 0.8, size: 20, type: 'eth', angle: Math.random() * Math.PI * 2, distance: Math.random() * 100 + 150 },
+      { x: canvas.width * 0.8, y: canvas.height * 0.8, size: 20, type: 'sol', angle: Math.random() * Math.PI * 2, distance: Math.random() * 100 + 150 },
+    ];
     
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width / (window.devicePixelRatio || 1), canvas.height / (window.devicePixelRatio || 1));
@@ -146,6 +230,44 @@ export function RadarVisualization() {
       
       ctx.restore();
       
+      // Update logo positions (blackhole effect)
+      const dpr = window.devicePixelRatio || 1;
+      logos.forEach(logo => {
+        // Update angle for circular motion
+        logo.angle += 0.02;
+        
+        // Gradually decrease distance to create a spiral
+        logo.distance = Math.max(20, logo.distance * 0.995);
+        
+        // Calculate new positions
+        logo.x = centerX * dpr + Math.cos(logo.angle) * logo.distance;
+        logo.y = centerY * dpr + Math.sin(logo.angle) * logo.distance;
+        
+        // Draw logo
+        drawLogo(ctx, logo.type, logo.x, logo.y, logo.size * (1 - logo.distance / 300));
+        
+        // Draw trail
+        ctx.beginPath();
+        ctx.moveTo(logo.x, logo.y);
+        const trailLength = 20;
+        for (let i = 1; i <= trailLength; i++) {
+          const trailX = centerX * dpr + Math.cos(logo.angle - i * 0.03) * (logo.distance + i * 0.8);
+          const trailY = centerY * dpr + Math.sin(logo.angle - i * 0.03) * (logo.distance + i * 0.8);
+          ctx.lineTo(trailX, trailY);
+        }
+        ctx.strokeStyle = `rgba(172, 255, 127, ${0.5 - logo.distance / 400})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+      
+      // Reset logos when they get too close to center
+      logos.forEach(logo => {
+        if (logo.distance < 30) {
+          logo.distance = Math.random() * 100 + 150;
+          logo.angle = Math.random() * Math.PI * 2;
+        }
+      });
+      
       // Apply radial gradient
       ctx.fillStyle = createRadialGradient();
       ctx.globalCompositeOperation = 'source-atop';
@@ -180,7 +302,9 @@ export function RadarVisualization() {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="w-16 h-16 rounded-full bg-defi-green/10 flex items-center justify-center animate-pulse-glow">
           <div className="w-8 h-8 rounded-full bg-defi-green/20 flex items-center justify-center">
-            <div className="w-4 h-4 rounded-full bg-defi-green/60"></div>
+            <div className="w-4 h-4 rounded-full bg-defi-green/60 flex items-center justify-center">
+              <Zap className="w-2 h-2 text-black" />
+            </div>
           </div>
         </div>
       </div>
