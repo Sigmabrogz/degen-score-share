@@ -35,62 +35,71 @@ const Index = () => {
     
     try {
       setTimeout(async () => {
-        if (!mainContentRef.current) {
-          throw new Error("Main content element not found");
-        }
-        
-        console.log("Step 1: Capturing main content");
-        
-        const mainCanvas = await html2canvas(mainContentRef.current, {
-          backgroundColor: "#14141A",
-          scale: 2,
-          logging: true,
-          useCORS: true,
-          allowTaint: true,
-          ignoreElements: (el) => {
-            return el.id === 'shareCard' || el.classList.contains('fixed');
+        try {
+          if (!mainContentRef.current) {
+            throw new Error("Main content element not found");
           }
-        });
-        
-        if (!mainCanvas || mainCanvas.width === 0) {
-          throw new Error("Failed to capture main content");
+          
+          console.log("Capturing main content...");
+          
+          const originalContent = mainContentRef.current;
+          
+          const mainCanvas = await html2canvas(originalContent, {
+            backgroundColor: "#14141A",
+            scale: 2,
+            logging: true,
+            useCORS: true,
+            allowTaint: true,
+          });
+          
+          console.log("Main content captured, dimensions:", mainCanvas.width, "x", mainCanvas.height);
+          
+          if (!shareCardRef.current) {
+            throw new Error("Share card reference not found");
+          }
+          
+          const contentContainer = shareCardRef.current.querySelector('.flex-1.relative');
+          if (!contentContainer) {
+            throw new Error("Content container not found in share card");
+          }
+          
+          while (contentContainer.firstChild) {
+            contentContainer.removeChild(contentContainer.firstChild);
+          }
+          
+          const img = document.createElement('img');
+          img.src = mainCanvas.toDataURL('image/png');
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.objectFit = 'cover';
+          contentContainer.appendChild(img);
+          
+          console.log("Added captured content to share card, capturing final result...");
+          
+          const finalCanvas = await html2canvas(shareCardRef.current, {
+            backgroundColor: null,
+            scale: 2,
+            logging: true,
+            useCORS: true,
+            allowTaint: true
+          });
+          
+          const imageUrl = finalCanvas.toDataURL('image/png');
+          setShareImageUrl(imageUrl);
+          console.log("Share card capture complete!");
+          
+        } catch (innerErr) {
+          console.error("Error in capture process:", innerErr);
+          toast({
+            title: "Failed to generate image",
+            description: innerErr instanceof Error ? innerErr.message : "Unknown error during capture",
+            variant: "destructive",
+            duration: 5000,
+          });
+        } finally {
+          setGenerating(false);
         }
-        
-        console.log("Step 2: Main content captured successfully", mainCanvas.width, mainCanvas.height);
-        
-        if (!shareCardRef.current) {
-          throw new Error("Share card element not found");
-        }
-        
-        const contentDiv = shareCardRef.current.querySelector('.absolute.inset-0.p-4');
-        if (!contentDiv) {
-          throw new Error("Content div not found in share card");
-        }
-        
-        contentDiv.innerHTML = '';
-        const img = document.createElement('img');
-        img.src = mainCanvas.toDataURL('image/png');
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
-        contentDiv.appendChild(img);
-        
-        console.log("Step 3: Capturing final share card");
-        
-        const finalCanvas = await html2canvas(shareCardRef.current, {
-          backgroundColor: null,
-          scale: 2,
-          logging: true,
-          useCORS: true,
-          allowTaint: true
-        });
-        
-        const imageUrl = finalCanvas.toDataURL('image/png');
-        setShareImageUrl(imageUrl);
-        console.log("Step 4: Image generation complete");
-        
-        setGenerating(false);
-      }, 500);
+      }, 1000);
     } catch (err) {
       console.error('Failed to generate share image:', err);
       toast({
