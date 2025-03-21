@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Navbar } from '@/components/navbar';
 import { RadarVisualization } from '@/components/radar-visualization';
 import { ProfileSection } from '@/components/profile-section';
@@ -9,33 +8,56 @@ import { ShareButton } from '@/components/share-button';
 import { ClusterLogo } from '@/components/cluster-logo';
 import { TokenBadge } from '@/components/token-badge';
 import { Twitter, MessageSquare, Wallet, Share2, Clock, Zap, Trophy, ArrowUpRight } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { ShareModal } from '@/components/share-modal';
+import { ShareCard } from '@/components/share-card';
+import html2canvas from 'html2canvas';
 
 const Index = () => {
-  const [copied, setCopied] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  
+  const userData = {
+    username: "0xSolidity.eth",
+    score: "1,035",
+    rank: "42",
+    level: "18"
+  };
 
-  const handleShare = () => {
-    // In a real app, this would generate a shareable link
-    navigator.clipboard.writeText(window.location.href)
-      .then(() => {
-        setCopied(true);
-        toast({
-          title: "Link copied to clipboard",
-          description: "Share your DeFi score with friends!",
-          duration: 3000,
-        });
-        setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(err => {
-        console.error('Failed to copy:', err);
-        toast({
-          title: "Failed to copy link",
-          description: "Please try again",
-          variant: "destructive",
-          duration: 3000,
-        });
+  const handleShare = async () => {
+    setGenerating(true);
+    setShareModalOpen(true);
+    setShareImageUrl(null);
+    
+    try {
+      setTimeout(async () => {
+        if (shareCardRef.current) {
+          const canvas = await html2canvas(shareCardRef.current, {
+            backgroundColor: null,
+            scale: 2,
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+          });
+          
+          const imageUrl = canvas.toDataURL('image/png');
+          setShareImageUrl(imageUrl);
+        }
+        setGenerating(false);
+      }, 100);
+    } catch (err) {
+      console.error('Failed to generate share image:', err);
+      toast({
+        title: "Failed to generate image",
+        description: "Please try again",
+        variant: "destructive",
+        duration: 3000,
       });
+      setGenerating(false);
+    }
   };
 
   return (
@@ -207,10 +229,30 @@ const Index = () => {
               </div>
             </div>
             
-            <ShareButton onClick={handleShare} className="w-full" />
+            <ShareButton onClick={handleShare} className="w-full" loading={generating} />
           </div>
         </div>
       </main>
+      
+      <ShareModal 
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+        imageUrl={shareImageUrl}
+        userData={userData}
+      />
+      
+      <div className="fixed -left-[9999px]">
+        <div ref={shareCardRef}>
+          <ShareCard
+            username={userData.username}
+            score={userData.score}
+            rank={userData.rank}
+            level={userData.level}
+          >
+            <RadarVisualization />
+          </ShareCard>
+        </div>
+      </div>
     </div>
   );
 };
