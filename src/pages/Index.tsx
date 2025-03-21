@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Navbar } from '@/components/navbar';
 import { RadarVisualization } from '@/components/radar-visualization';
 import { ProfileSection } from '@/components/profile-section';
@@ -18,6 +18,7 @@ const Index = () => {
   const [generating, setGenerating] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
   
   const userData = {
@@ -34,17 +35,29 @@ const Index = () => {
     
     try {
       setTimeout(async () => {
-        if (shareCardRef.current) {
-          const canvas = await html2canvas(shareCardRef.current, {
-            backgroundColor: null,
-            scale: 2,
-            logging: false,
-            useCORS: true,
-            allowTaint: true
-          });
+        if (mainContentRef.current && shareCardRef.current) {
+          const mainClone = mainContentRef.current.cloneNode(true) as HTMLElement;
           
-          const imageUrl = canvas.toDataURL('image/png');
-          setShareImageUrl(imageUrl);
+          const cardContent = shareCardRef.current.querySelector('.relative');
+          if (cardContent) {
+            cardContent.innerHTML = '';
+            
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'scale-[0.45] origin-top-left w-[220%] h-[220%]';
+            contentWrapper.appendChild(mainClone);
+            cardContent.appendChild(contentWrapper);
+            
+            const canvas = await html2canvas(shareCardRef.current, {
+              backgroundColor: null,
+              scale: 2,
+              logging: false,
+              useCORS: true,
+              allowTaint: true
+            });
+            
+            const imageUrl = canvas.toDataURL('image/png');
+            setShareImageUrl(imageUrl);
+          }
         }
         setGenerating(false);
       }, 100);
@@ -64,7 +77,7 @@ const Index = () => {
     <div className="min-h-screen bg-defi-dark text-white flex flex-col">
       <Navbar />
       
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
+      <main ref={mainContentRef} className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           
           {/* Left Column */}

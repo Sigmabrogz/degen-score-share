@@ -85,7 +85,7 @@ export function ShareModal({ open, onOpenChange, imageUrl, userData }: ShareModa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-defi-dark border-defi-green/30 text-white">
+      <DialogContent className="sm:max-w-[550px] bg-defi-dark border-defi-green/30 text-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center text-white monument-font">
             SHARE YOUR SCORE
@@ -102,7 +102,7 @@ export function ShareModal({ open, onOpenChange, imageUrl, userData }: ShareModa
               />
             </div>
           ) : (
-            <div className="w-full aspect-[4/5] bg-defi-gray/20 rounded-lg animate-pulse flex items-center justify-center">
+            <div className="w-full aspect-video bg-defi-gray/20 rounded-lg animate-pulse flex items-center justify-center">
               <p className="text-white/50">Generating image...</p>
             </div>
           )}
